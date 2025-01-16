@@ -1,0 +1,239 @@
+<template>
+  <div class="report-container">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>报表查看</span>
+          <div class="header-controls">
+            <el-date-picker
+              v-model="month"
+              type="month"
+              format="YYYY-MM"
+              value-format="YYYYMM"
+              placeholder="选择月份"
+            />
+            <el-button 
+              type="primary" 
+              @click="generateReport"
+              :loading="isLoading"
+            >
+              生成报表
+            </el-button>
+            <el-button 
+              type="success" 
+              @click="exportExcel"
+              :disabled="!hasData"
+            >
+              导出Excel
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="日常数据" name="daily">
+          <el-table
+            v-loading="isLoading"
+            :data="dailyReport.rows"
+            border
+            style="width: 100%"
+            :summary-method="getSummary"
+            show-summary
+          >
+            <!-- 固定列 -->
+            <el-table-column 
+              prop="客户经理" 
+              label="客户经理" 
+              fixed="left"
+              min-width="120"
+            />
+            <el-table-column 
+              prop="所属组" 
+              label="所属组"
+              fixed="left"
+              min-width="120"
+            />
+            
+            <!-- 动态列 -->
+            <template v-for="header in dynamicHeaders" :key="header">
+              <el-table-column 
+                :prop="header"
+                :label="header"
+                :align="getColumnAlign(header)"
+                :formatter="getColumnFormatter(header)"
+                min-width="120"
+              />
+            </template>
+          </el-table>
+        </el-tab-pane>
+
+        <el-tab-pane label="重点数据" name="key">
+          <el-table
+            v-loading="isLoading"
+            :data="keyReport.rows"
+            border
+            style="width: 100%"
+            :summary-method="getSummary"
+            show-summary
+          >
+            <!-- 固定列 -->
+            <el-table-column 
+              prop="客户经理" 
+              label="客户经理" 
+              fixed="left"
+              min-width="120"
+            />
+            <el-table-column 
+              prop="所属组" 
+              label="所属组"
+              fixed="left"
+              min-width="120"
+            />
+            
+            <!-- 动态列 -->
+            <template v-for="header in dynamicHeaders" :key="header">
+              <el-table-column 
+                :prop="header"
+                :label="header"
+                :align="getColumnAlign(header)"
+                :formatter="getColumnFormatter(header)"
+                min-width="120"
+              />
+            </template>
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
+  </div>
+</template>
+
+<script>
+import { mapState, mapGetters, mapActions } from 'vuex'
+
+export default {
+  name: 'ReportView',
+  data() {
+    return {
+      month: '',
+      activeTab: 'daily'
+    }
+  },
+  computed: {
+    ...mapState('reports', ['dailyReport', 'keyReport']),
+    ...mapGetters('reports', ['isLoading', 'hasData']),
+    
+    // 动态表头(除去固定列)
+    dynamicHeaders() {
+      const headers = this.dailyReport.headers || []
+      return headers.filter(h => !['客户经理', '所属组'].includes(h))
+    }
+  },
+  methods: {
+    ...mapActions('reports', ['generateReports', 'exportExcel']),
+    
+    async handleGenerate() {
+      if (!this.month) {
+        this.$message.error('请选择月份')
+        return
+      }
+
+      try {
+        await this.generateReports(this.month)
+        this.$message.success('报表生成成功')
+      } catch (error) {
+        this.$message.error('获取报表数据失败')
+      }
+    },
+    
+    async handleExport() {
+      try {
+        await this.exportExcel()
+        this.$message.success('导出成功')
+      } catch (error) {
+        this.$message.error('导出失败')
+      }
+    },
+    
+    // 列对齐方式
+    getColumnAlign(header) {
+      if (['客户经理', '所属组'].includes(header)) {
+        return 'left'
+      }
+      return 'right'
+    },
+    
+    // 列格式化
+    getColumnFormatter(header) {
+      if (header.includes('金额')) {
+        return (row, column, value) => {
+          return value?.toLocaleString('zh-CN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) || '0.00'
+        }
+      }
+      if (header.includes('完成率')) {
+        return (row, column, value) => {
+          return value ? `${(value * 100).toFixed(2)}%` : '0.00%'
+        }
+      }
+      if (header.includes('户数')) {
+        return (row, column, value) => {
+          return value?.toLocaleString('zh-CN') || '0'
+        }
+      }
+      return undefined
+    },
+    
+    // 合计行
+    getSummary({ columns, data }) {
+      const sums = []
+      columns.forEach((column, index) => {
+        if (index === 0) {
+          sums[index] = '合计'
+          return
+        }
+        if (index === 1) {
+          sums[index] = ''
+          return
+        }
+        
+        const values = data.map(item => Number(item[column.property]) || 0)
+        if (column.property.includes('金额') || column.property.includes('户数')) {
+          sums[index] = values.reduce((prev, curr) => prev + curr, 0)
+        } else if (column.property.includes('完成率')) {
+          // 完成率合计 = 金额合计 / 目标合计
+          const groupName = column.property.split('完成率')[0]
+          const amounts = data.map(item => Number(item[`${groupName}金额`]) || 0)
+          const totalAmount = amounts.reduce((prev, curr) => prev + curr, 0)
+          const targets = data.map(item => {
+            const rate = item[column.property] || 0
+            const amount = item[`${groupName}金额`] || 0
+            return rate > 0 ? amount / rate : 0
+          })
+          const totalTarget = targets.reduce((prev, curr) => prev + curr, 0)
+          sums[index] = totalTarget > 0 ? totalAmount / totalTarget : 0
+        } else {
+          sums[index] = ''
+        }
+      })
+      return sums
+    }
+  }
+}
+</script>
+
+<style scoped>
+.report-container {
+  padding: 20px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-controls {
+  display: flex;
+  gap: 10px;
+}
+</style> 
