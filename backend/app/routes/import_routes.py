@@ -106,4 +106,28 @@ def import_relations():
         
         return jsonify(result)
     
+    return jsonify({'error': '不支持的文件类型'}), 400
+
+@bp.route('/import/adjustments', methods=['POST'])
+def import_adjustments():
+    """导入调整数据"""
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+        
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        
+        result = ImportService.import_adjustments(filepath)
+        
+        # 删除临时文件
+        os.remove(filepath)
+        
+        return jsonify(result)
+    
     return jsonify({'error': '不支持的文件类型'}), 400 

@@ -1,0 +1,22 @@
+.upload-demo {
+  margin: 20px 0;
+}
+
+.el-upload__tip {
+  color: #909399;
+  font-size: 13px;
+  margin-top: 7px;
+}
+
+.import-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.el-tabs__content {
+  padding: 20px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+} 

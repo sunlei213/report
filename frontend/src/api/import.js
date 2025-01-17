@@ -24,5 +24,11 @@ export default {
     const formData = new FormData()
     formData.append('file', file)
     return api.post('/import/relations', formData)
+  },
+  
+  importAdjustments(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/import/adjustments', formData)
   }
 } 

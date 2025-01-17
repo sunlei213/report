@@ -61,6 +61,7 @@
                 :label="header"
                 :align="getColumnAlign(header)"
                 :formatter="getColumnFormatter(header)"
+                :class-name="getColumnClass(header)"
                 min-width="120"
               />
             </template>
@@ -97,6 +98,7 @@
                 :label="header"
                 :align="getColumnAlign(header)"
                 :formatter="getColumnFormatter(header)"
+                :class-name="getColumnClass(header)"
                 min-width="120"
               />
             </template>
@@ -164,12 +166,17 @@ export default {
     
     // 列格式化
     getColumnFormatter(header) {
-      if (header.includes('金额')) {
+      if (header.includes('金额') || header.includes('调整')) {
         return (row, column, value) => {
-          return value?.toLocaleString('zh-CN', {
+          const formatted = value?.toLocaleString('zh-CN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           }) || '0.00'
+          // 调整为负数时显示红色
+          if (header.includes('调整') && value < 0) {
+            return `<span class="negative">${formatted}</span>`
+          }
+          return formatted
         }
       }
       if (header.includes('完成率')) {
@@ -181,6 +188,14 @@ export default {
         return (row, column, value) => {
           return value?.toLocaleString('zh-CN') || '0'
         }
+      }
+      return undefined
+    },
+    
+    // 列样式
+    getColumnClass(header) {
+      if (header.includes('调整')) {
+        return 'adjustment-column'
       }
       return undefined
     },
@@ -199,7 +214,9 @@ export default {
         }
         
         const values = data.map(item => Number(item[column.property]) || 0)
-        if (column.property.includes('金额') || column.property.includes('户数')) {
+        if (column.property.includes('金额') || 
+            column.property.includes('调整') || 
+            column.property.includes('户数')) {
           sums[index] = values.reduce((prev, curr) => prev + curr, 0)
         } else if (column.property.includes('完成率')) {
           // 完成率合计 = 金额合计 / 目标合计
@@ -235,5 +252,11 @@ export default {
 .header-controls {
   display: flex;
   gap: 10px;
+}
+.adjustment-column {
+  background-color: #f5f7fa;
+}
+:deep(.negative) {
+  color: #f56c6c;
 }
 </style> 

@@ -18,6 +18,7 @@ class Adjustment(db.Model):
     amount = db.Column(db.Numeric(18, 2), nullable=False)  # 调整金额(可以为负)
     reason = db.Column(db.String(200))  # 调整原因
     remark = db.Column(db.String(500))  # 备注
+    serial_no = db.Column(db.String(50), unique=True)  # 流水号,用于更新数据
     
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)  # 创建时间
     updated_at = db.Column(db.DateTime, onupdate=datetime.now)  # 更新时间
@@ -31,4 +32,5 @@ class Adjustment(db.Model):
         db.Index('idx_adjustment_date', 'date'),  # 按日期查询
         db.Index('idx_adjustment_account', 'account'),  # 按账号查询
         db.Index('idx_adjustment_product', 'product_code'),  # 按产品查询
+        db.Index('idx_adjustment_serial', 'serial_no'),  # 按流水号查询
     ) 

@@ -24,6 +24,7 @@ class Product(db.Model):
     
     # 关联
     group = db.relationship('ProductGroup', back_populates='products')
+    private_fund = db.relationship('PrivateFund', back_populates='product')
 
 class GroupTarget(db.Model):
     """产品组对应每个客户经理的目标"""
