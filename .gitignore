@@ -1,1 +1,4 @@
 test
+.venv/
+.mypy_cache/
+.vscode/

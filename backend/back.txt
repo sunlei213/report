@@ -1,0 +1,30 @@
+# Web框架和扩展
+flask
+flask-sqlalchemy
+flask-cors
+flask-migrate
+
+# 数据处理
+pandas
+openpyxl
+numpy
+
+# 数据库支持
+SQLAlchemy
+psycopg2-binary  # PostgreSQL支持
+pymysql # MySQL支持
+
+# 开发工具
+python-dotenv>=1.0.0
+pytest>=7.0.0  # 测试框架
+pytest-cov>=4.0.0  # 测试覆盖率
+black>=23.0.0  # 代码格式化
+flake8>=6.0.0  # 代码检查
+mypy>=1.0.0  # 类型检查
+
+# API文档
+flask-swagger-ui
+apispec
+
+# 性能监控
+flask-monitoring

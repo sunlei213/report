@@ -6,7 +6,14 @@ from sqlalchemy import pool
 from alembic import context
 
 from app import create_app, db
-from app.models import *
+from app.models.adjustment import Adjustment
+from app.models.client_relation import ClientRelation
+from app.models.fixed_income import FixedIncome
+from app.models.group import Group
+from app.models.manager import Manager
+from app.models.private_fund import PrivateFund
+from app.models.product import Product
+from app.models.transaction import Transaction
 
 # 获取Flask应用配置
 app = create_app()
