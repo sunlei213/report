@@ -1,11 +1,7 @@
 <template>
   <el-container>
     <el-header>
-      <el-menu mode="horizontal" router>
-        <el-menu-item index="/report">报表查看</el-menu-item>
-        <el-menu-item index="/import">数据导入</el-menu-item>
-        <el-menu-item index="/settings">系统设置</el-menu-item>
-      </el-menu>
+      <Header />
     </el-header>
     
     <el-main>
@@ -13,6 +9,16 @@
     </el-main>
   </el-container>
 </template>
+
+<script>
+import Header from './components/Header.vue'
+
+export default {
+  components: {
+    Header
+  } 
+}
+</script>
 
 <style>
 .el-header {

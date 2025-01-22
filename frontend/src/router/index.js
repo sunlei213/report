@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ImportData from '@/components/ImportData.vue'
 import ReportView from '@/components/ReportView.vue'
 import Settings from '@/components/Settings.vue'
+import Login from '@/components/Login.vue'
 
 const routes = [
   {
@@ -18,7 +19,7 @@ const routes = [
     path: '/report',
     name: 'Report',
     component: ReportView,
-    meta: { title: '报表查看' }
+    meta: { title: '报表查看', requiresAuth: true }
   },
   {
     path: '/settings',
