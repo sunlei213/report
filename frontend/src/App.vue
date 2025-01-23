@@ -1,26 +1,27 @@
 <template>
   <el-container>
     <el-header>
-      <Header />
-    </el-header>
-    
+      <Header></Header>
+    </el-header> 
     <el-main>
       <router-view></router-view>
     </el-main>
   </el-container>
 </template>
 
-<script>
-import Header from './components/Header.vue'
+<script setup lang="ts">
+import Header from '@/components/Header.vue'
 
-export default {
-  components: {
-    Header
-  } 
-}
 </script>
 
 <style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+}
+
 .el-header {
   padding: 0;
   height: auto !important;

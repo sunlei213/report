@@ -1,14 +1,20 @@
 import { createStore } from 'vuex'
+import reports from './modules/reports'
 import managers from './modules/managers'
 import products from './modules/products'
-import reports from './modules/reports'
 import importModule from './modules/import'
 
-export default createStore({
+export interface RootState {
+  version: string
+}
+
+const store = createStore<RootState>({
   modules: {
+    reports,
     managers,
     products,
-    reports,
     import: importModule
   }
-}) 
+})
+
+export default store

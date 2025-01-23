@@ -1,47 +1,72 @@
 <template>
-  <div class="login-container">
-    <h2>用户登录</h2>
-    <form @submit.prevent="handleLogin">
-      <div class="form-group">
-        <label>用户名</label>
-        <input v-model="username" type="text" required>
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input v-model="password" type="password" required>
-      </div>
-      <button type="submit">登录</button>
-      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-    </form>
-  </div>
+  <el-container class="login-container">
+      <el-card class="login-card">
+        <h2 class="login-title">用户登录</h2>
+        <el-form
+          ref="loginForm"
+          :model="form"
+          :rules="rules"
+          label-width="80px"
+          class="login-form"
+        >
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="form.username" />
+          </el-form-item>
+          <el-form-item label="密码" prop="password">
+            <el-input v-model="form.password" type="password" />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              :loading="loading"
+              @click="onSubmit"
+            >
+              登录
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </el-container>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      username: '',
-      password: '',
-      errorMessage: ''
-    }
-  },
-  methods: {
-    async handleLogin() {
-      try {
-        const response = await this.$axios.post('/api/auth/login', {
-          username: this.username,
-          password: this.password
-        })
-        
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        
-        const redirect = this.$route.query.redirect || '/'
-        this.$router.push(redirect)
-      } catch (error) {
-        this.errorMessage = error.response?.data?.message || '登录失败'
-      }
-    }
+<script setup lang="ts">
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/utils/auth'
+import api from '@/api/index'
+
+const authStore = useAuthStore()
+const router = useRouter()
+const form = reactive({
+  username: '',
+  password: ''
+})
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+  ]
+}
+const loading = ref(false)
+
+const onSubmit = async () => {
+  loading.value = true
+  try {
+    const response = await api.post('/auth/login', {
+      username: form.username,
+      password: form.password
+    })
+    authStore.setToken(response.data.token)
+    authStore.setUser(form.username)
+    router.push('/')
+  } catch (error) {
+    ElMessage.error('登录失败，请检查用户名或密码')
+    loading.value = false
   }
 }
 </script>
@@ -54,31 +79,18 @@ export default {
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.login-card {
+  background: white;
+  padding: 2rem;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.5rem;
+.login-title {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-}
-
-button {
-  background: #007bff;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  cursor: pointer;
-}
-
-.error-message {
-  color: red;
-  margin-top: 1rem;
+.login-form {
+  max-width: 300px;
+  margin: 0 auto;
 }
 </style>
