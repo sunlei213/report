@@ -20,7 +20,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue'
 import DailyImport from './import/DailyImport.vue'
 import FixedImport from './import/FixedImport.vue'
@@ -28,24 +28,11 @@ import PrivateImport from './import/PrivateImport.vue'
 import RelationImport from './import/RelationImport.vue'
 import AdjustmentImport from './import/AdjustmentImport.vue'
 
-export default {
-  name: 'ImportData',
-  components: {
-    DailyImport,
-    FixedImport,
-    PrivateImport,
-    RelationImport,
-    AdjustmentImport
-  },
-  setup() {
-    const activeTab = ref('daily')
-    return { activeTab }
-  }
-}
+const activeTab = ref('daily')
 </script>
 
 <style scoped>
 .import-container {
   padding: 20px;
 }
-</style> 
+</style>

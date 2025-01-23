@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-  import { useAuthStore } from '@/utils/auth'
+  import { useAuthStore } from '@/store/modules/auth'
   import { ref, computed } from 'vue'
   import { useRouter } from 'vue-router'
 

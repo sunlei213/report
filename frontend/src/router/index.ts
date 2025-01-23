@@ -37,7 +37,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/import',
     name: 'Import',
     component: ImportData,
-    meta: { title: '数据导入', requiresAuth: true }
+    meta: { title: '数据导入', requiresAuth: false}
   }
 ]
 

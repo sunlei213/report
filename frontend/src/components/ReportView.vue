@@ -14,14 +14,14 @@
             />
             <el-button 
               type="primary" 
-              @click="generateReport"
+              @click="handleGenerate"
               :loading="isLoading"
             >
               生成报表
             </el-button>
             <el-button 
               type="success" 
-              @click="exportExcel"
+              @click="handleExport"
               :disabled="!hasData"
             >
               导出Excel
@@ -109,134 +109,127 @@
   </div>
 </template>
 
-<script>
-import { mapState, mapGetters, mapActions } from 'vuex'
+<script setup>
+import { computed, ref } from 'vue'
+import { useReportsStore } from '@/store/modules/reports'
 
-export default {
-  name: 'ReportView',
-  data() {
-    return {
-      month: '',
-      activeTab: 'daily'
-    }
-  },
-  computed: {
-    ...mapState('reports', ['dailyReport', 'keyReport']),
-    ...mapGetters('reports', ['isLoading', 'hasData']),
-    
-    // 动态表头(除去固定列)
-    dynamicHeaders() {
-      const headers = this.dailyReport.headers || []
-      return headers.filter(h => !['客户经理', '所属组'].includes(h))
-    }
-  },
-  methods: {
-    ...mapActions('reports', ['generateReports', 'exportExcel']),
-    
-    async handleGenerate() {
-      if (!this.month) {
-        this.$message.error('请选择月份')
-        return
-      }
+const reportsStore = useReportsStore()
 
-      try {
-        await this.generateReports(this.month)
-        this.$message.success('报表生成成功')
-      } catch (error) {
-        this.$message.error('获取报表数据失败')
+const month = ref('')
+const activeTab = ref('daily')
+
+const dailyReport = computed(() => reportsStore.dailyReport)
+const keyReport = computed(() => reportsStore.keyReport)
+const isLoading = computed(() => reportsStore.isLoading)
+const hasData = computed(() => reportsStore.hasData)
+// 动态表头(除去固定列)
+const dynamicHeaders = computed(() => {
+  const headers = dailyReport.value.headers || []
+  return headers.filter(h => !['客户经理', '所属组'].includes(h))
+})
+
+const handleGenerate = async () => {
+  if (!month.value) {
+    ElMessage.error('请选择月份')
+    return
+  }
+
+  try {
+    await reportsStore.generateReports(month.value)
+    ElMessage.success('报表生成成功')
+  } catch (error) {
+    ElMessage.error('获取报表数据失败')
+  }
+}
+
+const handleExport = async () => {
+  try {
+    await reportsStore.exportExcel()
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error('导出失败')
+  }
+}
+
+  // 列对齐方式
+const getColumnAlign = (header) => {
+  if (['客户经理', '所属组'].includes(header)) {
+    return 'left'
+  }
+  return 'right'
+}
+
+  // 列格式化
+const getColumnFormatter = (header) => {
+  if (header.includes('金额') || header.includes('调整')) {
+    return (row, column, value) => {
+      const formatted = value?.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) || '0.00'
+       // 调整为负数时显示红色
+      if (header.includes('调整') && value < 0) { 
+        return `<span class="negative">${formatted}</span>`
       }
-    },
-    
-    async handleExport() {
-      try {
-        await this.exportExcel()
-        this.$message.success('导出成功')
-      } catch (error) {
-        this.$message.error('导出失败')
-      }
-    },
-    
-    // 列对齐方式
-    getColumnAlign(header) {
-      if (['客户经理', '所属组'].includes(header)) {
-        return 'left'
-      }
-      return 'right'
-    },
-    
-    // 列格式化
-    getColumnFormatter(header) {
-      if (header.includes('金额') || header.includes('调整')) {
-        return (row, column, value) => {
-          const formatted = value?.toLocaleString('zh-CN', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }) || '0.00'
-          // 调整为负数时显示红色
-          if (header.includes('调整') && value < 0) {
-            return `<span class="negative">${formatted}</span>`
-          }
-          return formatted
-        }
-      }
-      if (header.includes('完成率')) {
-        return (row, column, value) => {
-          return value ? `${(value * 100).toFixed(2)}%` : '0.00%'
-        }
-      }
-      if (header.includes('户数')) {
-        return (row, column, value) => {
-          return value?.toLocaleString('zh-CN') || '0'
-        }
-      }
-      return undefined
-    },
-    
-    // 列样式
-    getColumnClass(header) {
-      if (header.includes('调整')) {
-        return 'adjustment-column'
-      }
-      return undefined
-    },
-    
-    // 合计行
-    getSummary({ columns, data }) {
-      const sums = []
-      columns.forEach((column, index) => {
-        if (index === 0) {
-          sums[index] = '合计'
-          return
-        }
-        if (index === 1) {
-          sums[index] = ''
-          return
-        }
-        
-        const values = data.map(item => Number(item[column.property]) || 0)
-        if (column.property.includes('金额') || 
-            column.property.includes('调整') || 
-            column.property.includes('户数')) {
-          sums[index] = values.reduce((prev, curr) => prev + curr, 0)
-        } else if (column.property.includes('完成率')) {
-          // 完成率合计 = 金额合计 / 目标合计
-          const groupName = column.property.split('完成率')[0]
-          const amounts = data.map(item => Number(item[`${groupName}金额`]) || 0)
-          const totalAmount = amounts.reduce((prev, curr) => prev + curr, 0)
-          const targets = data.map(item => {
-            const rate = item[column.property] || 0
-            const amount = item[`${groupName}金额`] || 0
-            return rate > 0 ? amount / rate : 0
-          })
-          const totalTarget = targets.reduce((prev, curr) => prev + curr, 0)
-          sums[index] = totalTarget > 0 ? totalAmount / totalTarget : 0
-        } else {
-          sums[index] = ''
-        }
-      })
-      return sums
+      return formatted
     }
   }
+  if (header.includes('完成率')) {
+    return (row, column, value) => {
+      return value ? `${(value * 100).toFixed(2)}%` : '0.00%'
+    }
+  }
+  if (header.includes('户数')) {
+    return (row, column, value) => {
+      return value?.toLocaleString('zh-CN') || '0'
+    }
+  }
+  return undefined
+}
+
+ // 列样式
+const getColumnClass = (header) => { 
+  if (header.includes('调整')) {
+    return 'adjustment-column'
+  }
+  return undefined
+}
+
+   // 合计行
+const getSummary = ({ columns, data }) => {
+  const sums = []
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = '合计'
+      return
+    }
+    if (index === 1) {
+      sums[index] = ''
+      return
+    }
+    
+    const values = data.map(item => Number(item[column.property]) || 0)
+    if (column.property.includes('金额') || 
+        column.property.includes('调整') || 
+        column.property.includes('户数')) {
+      sums[index] = values.reduce((prev, curr) => prev + curr, 0)
+    } else if (column.property.includes('完成率')) {
+        // 完成率合计 = 金额合计 / 目标合计
+      const groupName = column.property.split('完成率')[0]
+      const amounts = data.map(item => Number(item[`${groupName}金额`]) || 0)
+      const totalAmount = amounts.reduce((prev, curr) => prev + curr, 0)
+      const targets = data.map(item => {
+        const rate = item[column.property] || 0
+        const amount = item[`${groupName}金额`] || 0
+        return rate > 0 ? amount / rate : 0
+      })
+      const totalTarget = targets.reduce((prev, curr) => prev + curr, 0)
+      sums[index] = totalTarget > 0 ? totalAmount / totalTarget : 0
+    } else {
+      sums[index] = ''
+    }
+  })
+  return sums
 }
 </script>
 
@@ -259,4 +252,4 @@ export default {
 :deep(.negative) {
   color: #f56c6c;
 }
-</style> 
+</style>

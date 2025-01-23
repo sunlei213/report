@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
-import { useAuthStore } from '@/utils/auth'
+import { useAuthStore } from '@/store/modules/auth'
 
 export interface ApiResponse<T = any> {
   status: string

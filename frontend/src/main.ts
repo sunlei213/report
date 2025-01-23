@@ -7,7 +7,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './assets/styles/import.css'
 import router from './router/index'
-import store from './store/index'
+
 // 注册全局依赖
 
 import App from './App.vue'

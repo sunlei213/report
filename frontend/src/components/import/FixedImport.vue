@@ -19,48 +19,41 @@
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue'
-import { useStore } from 'vuex'
+<script setup>
+import { computed } from 'vue'
+import { useImportStore } from '@/store/modules/import'
 import { ElMessage } from 'element-plus'
 
-export default {
-  name: 'FixedImport',
-  setup() {
-    const store = useStore()
-    const uploadUrl = '/api/import/fixed'
-    const loading = computed(() => store.state.import.loading)
+const importStore = useImportStore()
+const uploadUrl = '/api/import/fixed'
+const loading = computed(() => importStore.loading)
 
-    const handleSuccess = (response) => {
-      if (response.status === 'success') {
-        ElMessage.success(response.message)
-        store.commit('import/SET_LAST_IMPORT', response)
-      } else {
-        ElMessage.error(response.message)
-      }
-    }
-
-    const handleError = () => {
-      ElMessage.error('上传失败')
-    }
-
-    const beforeUpload = (file) => {
-      const isExcel = /\.(xlsx|xls)$/.test(file.name.toLowerCase())
-      if (!isExcel) {
-        ElMessage.error('只能上传Excel文件!')
-        return false
-      }
-      store.commit('import/SET_LOADING', true)
-      return true
-    }
-
-    return {
-      uploadUrl,
-      loading,
-      handleSuccess,
-      handleError,
-      beforeUpload
-    }
+const handleSuccess = (response) => {
+  if (response.status === 'success') {
+    ElMessage.success(response.message)
+    importStore.lastImport = response
+  } else {
+    ElMessage.error(response.message)
   }
 }
-</script> 
+
+const handleError = () => {
+  ElMessage.error('上传失败')
+}
+
+const beforeUpload = (file) => {
+  const isExcel = /\.(xlsx|xls)$/.test(file.name.toLowerCase())
+  if (!isExcel) {
+    ElMessage.error('只能上传Excel文件!')
+    return false
+  }
+  importStore.loading = true
+  return true
+}
+</script>
+
+<style scoped>
+.fixed-import {
+  padding: 20px;
+}
+</style>

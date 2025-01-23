@@ -1,74 +1,62 @@
-import { Module } from 'vuex'
-import { RootState } from '../index'
+import { defineStore } from 'pinia'
 import importApi from '@/api/import'
 import { ImportState } from '@/types'
 
-const importModule: Module<ImportState, RootState> = {
-  namespaced: true,
-  state: () => ({
+export const useImportStore = defineStore('import', {
+  state: (): ImportState => ({
     loading: false,
     lastImport: null
   }),
-  mutations: {
-    SET_LOADING(state, loading: boolean) {
-      state.loading = loading
-    },
-    SET_LAST_IMPORT(state, data: any) {
-      state.lastImport = data
-    }
-  },
   actions: {
-    async importDaily({ commit }, file: File) {
-      commit('SET_LOADING', true)
+    async importDaily(file: File) {
+      this.loading = true
       try {
         const res = await importApi.importDaily(file)
-        commit('SET_LAST_IMPORT', res)
+        this.lastImport = res
         return res
       } finally {
-        commit('SET_LOADING', false)
+        this.loading = false
       }
     },
-    async importFixed({ commit }, file: File) {
-      commit('SET_LOADING', true)
+    async importFixed(file: File) {
+      this.loading = true
       try {
         const res = await importApi.importFixed(file)
-        commit('SET_LAST_IMPORT', res)
+        this.lastImport = res
         return res
       } finally {
-        commit('SET_LOADING', false)
+        this.loading = false
       }
     },
-    async importPrivate({ commit }, file: File) {
-      commit('SET_LOADING', true)
+    async importPrivate(file: File) {
+      this.loading = true
       try {
         const res = await importApi.importPrivate(file)
-        commit('SET_LAST_IMPORT', res)
+        this.lastImport = res
         return res
       } finally {
-        commit('SET_LOADING', false)
+        this.loading = false
       }
     },
-    async importRelations({ commit }, file: File) {
-      commit('SET_LOADING', true)
+    async importRelations(file: File) {
+      this.loading = true
       try {
         const res = await importApi.importRelations(file)
-        commit('SET_LAST_IMPORT', res)
+        this.lastImport = res
         return res
       } finally {
-        commit('SET_LOADING', false)
+        this.loading = false
       }
     },
-    async importAdjustments({ commit }, file: File) {
-      commit('SET_LOADING', true)
+    async importAdjustments(file: File) {
+      this.loading = true
       try {
         const res = await importApi.importAdjustments(file)
-        commit('SET_LAST_IMPORT', res)
+        this.lastImport = res
         return res
       } finally {
-        commit('SET_LOADING', false)
+        this.loading = false
       }
     }
   }
-}
-
-export default importModule
+})

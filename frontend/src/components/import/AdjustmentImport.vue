@@ -18,44 +18,38 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue'
-import { useStore } from 'vuex'
+import { useImportStore } from '@/store/modules/import'
 import { ElMessage } from 'element-plus'
 
-export default {
-  name: 'AdjustmentImport',
-  setup() {
-    const store = useStore()
-    const uploadUrl = '/api/import/adjustments'
+const importStore = useImportStore()
+const uploadUrl = '/api/import/adjustments'
 
-    const handleSuccess = (response) => {
-      if (response.status === 'success') {
-        ElMessage.success(response.message)
-      } else {
-        ElMessage.error(response.message)
-      }
-    }
-
-    const handleError = () => {
-      ElMessage.error('上传失败')
-    }
-
-    const beforeUpload = (file) => {
-      const isExcel = /\.(xlsx|xls)$/.test(file.name.toLowerCase())
-      if (!isExcel) {
-        ElMessage.error('只能上传Excel文件!')
-        return false
-      }
-      return true
-    }
-
-    return {
-      uploadUrl,
-      handleSuccess,
-      handleError,
-      beforeUpload
-    }
+const handleSuccess = (response) => {
+  if (response.status === 'success') {
+    ElMessage.success(response.message)
+  } else {
+    ElMessage.error(response.message)
   }
 }
-</script> 
+
+const handleError = () => {
+  ElMessage.error('上传失败')
+}
+
+const beforeUpload = (file) => {
+  const isExcel = /\.(xlsx|xls)$/.test(file.name.toLowerCase())
+  if (!isExcel) {
+    ElMessage.error('只能上传Excel文件!')
+    return false
+  }
+  return true
+}
+</script>
+
+<style scoped>
+.adjustment-import {
+  padding: 20px;
+}
+</style>

@@ -1,12 +1,9 @@
-import { Module } from 'vuex'
-import { RootState } from '../index'
+import { defineStore } from 'pinia'
 import reportsApi from '@/api/reports'
 import { ReportData, ReportsState } from '@/types'
 
-
-const reportsModule: Module<ReportsState, RootState> = {
-  namespaced: true,
-  state: () => ({
+export const useReportsStore = defineStore('reports', {
+  state: (): ReportsState => ({
     dailyReport: {
       headers: [],
       rows: []
@@ -18,23 +15,13 @@ const reportsModule: Module<ReportsState, RootState> = {
     loading: false,
     currentMonth: ''
   }),
-  mutations: {
-    SET_DAILY_REPORT(state, report: ReportData) {
-      state.dailyReport = report
-    },
-    SET_KEY_REPORT(state, report: ReportData) {
-      state.keyReport = report
-    },
-    SET_LOADING(state, loading: boolean) {
-      state.loading = loading
-    },
-    SET_CURRENT_MONTH(state, month: string) {
-      state.currentMonth = month
-    }
+  getters: {
+    isLoading: state => state.loading,
+    hasData: state => state.dailyReport.rows.length > 0 || state.keyReport.rows.length > 0
   },
   actions: {
-    async generateReports({ commit }, month: string) {
-      commit('SET_LOADING', true)
+    async generateReports(month: string) {
+      this.loading = true
       try {
         const [dailyRes, keyRes] = await Promise.all([
           reportsApi.getDailyReport(month),
@@ -42,30 +29,24 @@ const reportsModule: Module<ReportsState, RootState> = {
         ])
 
         if (dailyRes.status === 'success') {
-          commit('SET_DAILY_REPORT', dailyRes.data)
+          this.dailyReport = dailyRes.data
         }
         if (keyRes.status === 'success') {
-          commit('SET_KEY_REPORT', keyRes.data)
+          this.keyReport = keyRes.data
         }
-        commit('SET_CURRENT_MONTH', month)
+        this.currentMonth = month
       } catch (error) {
         throw error
       } finally {
-        commit('SET_LOADING', false)
+        this.loading = false
       }
     },
 
-    async exportExcel({ state }) {
-      if (!state.currentMonth) {
+    async exportExcel() {
+      if (!this.currentMonth) {
         throw new Error('请先选择月份')
       }
-      return reportsApi.exportExcel(state.currentMonth)
+      return reportsApi.exportExcel(this.currentMonth)
     }
-  },
-  getters: {
-    isLoading: state => state.loading,
-    hasData: state => state.dailyReport.rows.length > 0 || state.keyReport.rows.length > 0
   }
-}
-
-export default reportsModule
+})
