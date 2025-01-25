@@ -61,14 +61,19 @@ class ImportService:
                 ).first() if row['serial_no'] else None
                 
                 if existing:
-                    # 更新已存在的记录
-                    existing.date = row['date']
-                    existing.account = row['account']
-                    existing.product_code = row['stock']
-                    existing.product_name = row['stock_name']
-                    existing.manager_id = managers[row['name']]
-                    existing.amount = row['money']
-                    update_count += 1
+                    if row['撤单'] == '撤单':
+                        # 如果是撤单,删除记录
+                        db.session.delete(existing)
+                        update_count += 1
+                    else:
+                        # 更新已存在的记录
+                        existing.date = row['date']
+                        existing.account = row['account']
+                        existing.product_code = row['stock']
+                        existing.product_name = row['stock_name']
+                        existing.manager_id = managers[row['name']]
+                        existing.amount = row['money']
+                        update_count += 1
                 else:
                     # 创建新记录
                     trans = Transaction(
